@@ -4,35 +4,32 @@ BACKUP_DIVICIONS=$2
 tmpfile="/tmp/backupparts.txt"
 mycontainers=$(az acr repository list -n $REGISTRY --output tsv)
 echo "pulling images to local machine"
-# for i in $mycontainers
-# do
+for i in $mycontainers
+do
 
-#     possile_error="$(docker pull $REGISTRY.azurecr.io/$i --all-tags  -q 2>&1 >/dev/null)"
-#     if [ ! -z  $possile_error  ]    ; then
-#         echo "Error while pulling $i image"
-#         echo "$possile_error"
-#     fi
+    possile_error="$(docker pull $REGISTRY.azurecr.io/$i --all-tags  -q 2>&1 >/dev/null)"
+    if [ ! -z  $possile_error  ]    ; then
+        echo "Error while pulling $i image"
+        echo "$possile_error"
+    fi
    
     
-# done 
+done 
 
 
 
-outfilename="allimages_of${REGISTRY}.tar"
-# echo "making exported file $outfilename"
-images_count=$(docker images | grep monolito | wc -l)
+folder="backups/${REGISTRY}/"
+mkdir -p $folder
+
+images_count=$(docker images | grep ${REGISTRY}. | wc -l)
 images_per_part=$(($images_count/$BACKUP_DIVICIONS))
-i=0
+i=1
 echo "images per part $images_per_part"
 
-docker images --format '{{.Repository}}:{{.Tag}}' | grep monolito | xargs -I{} -n 33  | tee $tmpfile >>/dev/null
+docker images --format '{{.Repository}}:{{.Tag}}' | grep monolito | xargs -I{} -n $images_per_part  | tee $tmpfile >>/dev/null
 while read p; do
-#   echo "$p"
 
-    # echo "$i.$p"
-
-    
-    outpartfilename="${outfilename}-${i}"
+    outpartfilename="${folder}-${i}.tar"
     echo "making exported file part $outpartfilename"
     docker save $p -o $outpartfilename
     i=$((i+1))
